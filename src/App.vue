@@ -1,9 +1,10 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+// import page from "./openLayers/index.vue";
+import page from "./cesium/index.vue";
 </script>
 
 <template>
-  <HelloWorld msg="Vite + Vue" />
+  <page />
 </template>
 
 <style scoped>
