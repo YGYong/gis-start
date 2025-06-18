@@ -26,48 +26,61 @@ onMounted(async () => {
     // selectionIndicator: false,
     // infoBox: false,
     // 开启地形
-    // terrainProvider: await Cesium.createWorldTerrainAsync({
-    //   requestVertexNormals: true, // 真实光照效果
-    //   requestWaterMask: true, // 真实水面流动效果
-    // }),
+    terrainProvider: await Cesium.createWorldTerrainAsync({
+      requestVertexNormals: true, // 真实光照效果
+      requestWaterMask: true, // 真实水面流动效果
+    }),
   });
 
-  // 1.
-  const geometry = new Cesium.CircleGeometry({
-    center: Cesium.Cartesian3.fromDegrees(116.39, 39.9),
-    radius: 1000,
-  });
-
-  // 2.
-  const geometryInstance = new Cesium.GeometryInstance({
-    geometry,
-    attributes: {
-      color: new Cesium.ColorGeometryInstanceAttribute(0.0, 1.0, 0.0, 1),
+  // -------------------------------
+  // 案例1：创建一个虚线和实线重叠的线，大约十个点左右,线条弯曲一些,点位在珠穆朗玛峰
+  const positions = [
+    Cesium.Cartesian3.fromDegrees(86.95, 27.98), // 珠穆朗玛峰
+    Cesium.Cartesian3.fromDegrees(86.96, 27.99),
+    Cesium.Cartesian3.fromDegrees(86.97, 27.90),
+    Cesium.Cartesian3.fromDegrees(86.98, 27.91),
+    Cesium.Cartesian3.fromDegrees(86.99, 27.92),
+    Cesium.Cartesian3.fromDegrees(86.90, 27.93),
+    Cesium.Cartesian3.fromDegrees(86.91, 27.94),
+    Cesium.Cartesian3.fromDegrees(86.92, 27.95),
+    Cesium.Cartesian3.fromDegrees(86.93, 27.96),
+    Cesium.Cartesian3.fromDegrees(86.94, 27.97),
+    Cesium.Cartesian3.fromDegrees(86.95, 27.98),
+  ];
+  const lineStyle = {
+    // clampToGround: true, // 线条贴地
+    // arcType: Cesium.ArcType.GEODESIC, // 测地线（沿地球表面）
+    arcType: Cesium.ArcType.RHUMB, // 恒向线
+    granularity: 1000, // 线条的平滑度
+  } 
+  // const polyline = viewer.entities.add({
+  //   polyline: {
+  //     ...lineStyle,
+  //     positions: positions,
+  //     width: 10,
+  //     material: new Cesium.PolylineDashMaterialProperty({
+  //       color: Cesium.Color.AQUA,
+  //       dashLength: 100,
+  //       // dashPattern: parseInt("11110000", 2),
+  //     }),
+  //   },
+  // });
+  const solidLine = viewer.entities.add({
+    polyline: {
+      ...lineStyle,
+      positions: positions,
+      width: 4,
+      material: Cesium.Color.AQUA,
     },
   });
+  viewer.zoomTo([ solidLine]); // 缩放到线的位置
+  // 设置相机位置
+  // viewer.camera.flyTo({
+  //   destination: Cesium.Cartesian3.fromDegrees(116.42, 39.93, 5000), // 设置相机位置
+  //   duration: 2, // 飞行时间
+  // });
 
-  // 3.
-  const appearance = new Cesium.MaterialAppearance({
-    flat: true,
-    translucent: true,
-  });
-
-  // 4.
-  const primitive = new Cesium.Primitive({
-    geometryInstances: [geometryInstance],
-    appearance,
-  });
-  viewer.scene.primitives.add(primitive);
-  viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(116.39, 39.9, 5000),
-    orientation: {
-      heading: Cesium.Math.toRadians(0),
-      pitch: Cesium.Math.toRadians(-90),
-      roll: 0,
-    },
-  });
-
-  
+  // -------------------------------
 
   const tiandituProvider = new Cesium.WebMapTileServiceImageryProvider({
     url:
@@ -82,7 +95,7 @@ onMounted(async () => {
     credit: new Cesium.Credit("天地图影像"),
   });
   // 将天地图影像添加到viewer实例的影像图层集合中
-  const layer = viewer.imageryLayers.addImageryProvider(tiandituProvider);
+  // const layer = viewer.imageryLayers.addImageryProvider(tiandituProvider);
   // layer.alpha = 0.9; // 设置透明度
   // 清空logo
   viewer.cesiumWidget.creditContainer.style.display = "none";
