@@ -4,7 +4,6 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import latlng from "./utils/common";
 import * as Cesium from "cesium";
 const cesiumContainer = ref(null);
 let viewer = null;
@@ -35,10 +34,17 @@ onMounted(async () => {
 
   // -------------------------------
 
+  // 深度监测
+  viewer.scene.globe.depthTestAgainstTerrain = true;
+
+  // 它在平铺方案中的每个渲染图块周围绘制一个框，并在其中绘制一个标签，指示图块的 X、Y、Level 坐标。这对于调试地形和图像渲染问题非常有用
+  const imageryProvider = new Cesium.TileCoordinatesImageryProvider({
+    color: Cesium.Color.RED,
+  });
+  viewer.imageryLayers.addImageryProvider(imageryProvider);
   // -------------------------------
 
   // ================================================
-  console.log(latlng.getCenter(viewer));
   // 以下为天地图及天地图标注加载
   const tiandituProvider = new Cesium.WebMapTileServiceImageryProvider({
     url:
@@ -75,7 +81,5 @@ onMounted(async () => {
   viewer.cesiumWidget.creditContainer.style.display = "none";
   // 开启帧率
   viewer.scene.debugShowFramesPerSecond = true;
-  // 深度监测
-  // viewer.scene.globe.depthTestAgainstTerrain = true;
 });
 </script>

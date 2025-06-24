@@ -4,7 +4,6 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import latlng from "./utils/common";
 import * as Cesium from "cesium";
 const cesiumContainer = ref(null);
 let viewer = null;
@@ -35,10 +34,21 @@ onMounted(async () => {
 
   // -------------------------------
 
+  // 网格    思路：添加一个矩形，坐标-180.0, -90.0, 180, 90.0，网格材质
+  const rectangle = viewer.entities.add({
+    rectangle: {
+      coordinates: Cesium.Rectangle.fromDegrees(-180.0, -90.0, 180, 90.0),
+      material: new Cesium.GridMaterialProperty({}),
+    },
+  });
+
+  // 当相机移动结束时，提取视域边界 viewer.camera.computeViewRectangle()
+  viewer.camera.moveEnd.addEventListener(() => {
+    rectangle.rectangle.coordinates = viewer.camera.computeViewRectangle();
+  });
   // -------------------------------
 
   // ================================================
-  console.log(latlng.getCenter(viewer));
   // 以下为天地图及天地图标注加载
   const tiandituProvider = new Cesium.WebMapTileServiceImageryProvider({
     url:
@@ -73,9 +83,5 @@ onMounted(async () => {
   layer.alpha = 0.6; // 设置透明度
   // 清空logo
   viewer.cesiumWidget.creditContainer.style.display = "none";
-  // 开启帧率
-  viewer.scene.debugShowFramesPerSecond = true;
-  // 深度监测
-  // viewer.scene.globe.depthTestAgainstTerrain = true;
 });
 </script>
