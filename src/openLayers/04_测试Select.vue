@@ -32,7 +32,6 @@ import Text from "ol/style/Text.js";
 import { LineString } from "ol/geom";
 import Select from "ol/interaction/Select.js";
 import { pointerMove } from "ol/events/condition";
-import Draw from "ol/interaction/Draw.js";
 const mapContainer = ref(null);
 let map = null;
 const view = new View({
@@ -61,23 +60,43 @@ onMounted(async () => {
     view,
   });
 
-  // 创建一个图层
+  // 加载jeojson数据，给每个省添加随机色
   const vectorLayer = new VectorLayer({
-    source: new VectorSource(),
+    source: new VectorSource({
+      url: "https://geojson.cn/api/china/1.6.2/china.json", // 替换为你的GeoJSON数据URL
+      format: new GeoJSON(),
+    }),
+    style: () => {
+      return new Style({
+        fill: new Fill({
+          color: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(
+            Math.random() * 256
+          )}, ${Math.floor(Math.random() * 256)}, 0.6)`, // 随机颜色
+        }),
+        stroke: new Stroke({
+          color: "#000",
+          width: 1,
+        }),
+      });
+    },
   });
   map.addLayer(vectorLayer);
-  // 绘制
-  const draw = new Draw({
-    source: vectorLayer.getSource(),
-    type: "LineString",
-    style: new Style({
-      stroke: new Stroke({
-        color: "blue",
-        width: 2,
-      }),
-    }),
+
+  // 选中省份变色
+  const select = new Select({
+    condition:pointerMove // 默认为选中，当前为触摸
   });
-  map.addInteraction(draw);
+  map.addInteraction(select);
+  select.on("select", (e) => {
+    console.log(e);
+    e.selected[0].setStyle(
+      new Style({
+        fill: new Fill({
+          color: "red",
+        }),
+      })
+    );
+  });
 });
 const gotoNJ = () => {
   console.log(map.getView());
