@@ -37,7 +37,7 @@ onMounted(async () => {
   // 飞到中国南京
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(118.7969, 32.0603, 2000), // 南京的经纬度和高度
-    duration: 2, // 飞行持续时间
+    duration: 5, // 飞行持续时间
     easingFunction: Cesium.EasingFunction.LINEAR_NONE,
     orientation: {
       heading: Cesium.Math.toRadians(0), // 方向
@@ -46,13 +46,35 @@ onMounted(async () => {
     },
   });
 
-   const position = new Cesium.SampledPositionProperty();
-  //  十秒后到安徽
-  position.addSample(
-    Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), 10, new Cesium.JulianDate()),
-    Cesium.Cartesian3.fromDegrees(117.2272, 31.8206, 2000)
-  );
-  viewer.camera.lookAt(position);
+  // 2、--------------相机事件（更改默认操作）----------
+  const controller = viewer.scene.screenSpaceCameraController;
+
+  // 示例：将右键拖拽改为旋转（默认是缩放）
+  // controller.rotateEventTypes = [Cesium.CameraEventType.RIGHT_DRAG];
+
+  // 示例：仅用滚轮控制缩放
+  // controller.zoomEventTypes = [Cesium.CameraEventType.WHEEL];
+
+  // 监听场景更新之前的事件
+  // viewer.scene.preUpdate.addEventListener(() => {
+  //   console.log("场景更新之前");
+  // });
+  // // 监听场景更新之后的事件
+  // viewer.scene.postUpdate.addEventListener(() => {
+  //   console.log("场景更新之后");
+  // });
+  // // 监听场景渲染之前的事件
+  // viewer.scene.preRender.addEventListener(() => {
+  //   console.log("场景渲染之前");
+  // });
+  // // 监听场景渲染之后的事件
+  // viewer.scene.postRender.addEventListener(() => {
+  //   console.log("场景渲染之后");
+  // });
+  // 禁用所有默认交互
+  controller.enableRotate = false;
+  controller.enableZoom = false;
+  controller.enableTilt = false;
 
   // -------------------------------
 
