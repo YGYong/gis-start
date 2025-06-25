@@ -46,13 +46,13 @@ onMounted(async () => {
     },
   });
 
-   const position = new Cesium.SampledPositionProperty();
-  //  十秒后到安徽
-  position.addSample(
-    Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), 10, new Cesium.JulianDate()),
-    Cesium.Cartesian3.fromDegrees(117.2272, 31.8206, 2000)
-  );
-  viewer.camera.lookAt(position);
+  //  const position = new Cesium.SampledPositionProperty();
+  // //  十秒后到安徽
+  // position.addSample(
+  //   Cesium.JulianDate.addSeconds(Cesium.JulianDate.now(), 10, new Cesium.JulianDate()),
+  //   Cesium.Cartesian3.fromDegrees(117.2272, 31.8206, 2000)
+  // );
+  // viewer.camera.lookAt(position);
 
   // -------------------------------
 
