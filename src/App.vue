@@ -2,8 +2,6 @@
 // import page from "./openLayers/index.vue";
 // import page from "./cesium/index.vue";
 import page from "./glsl/index.vue";
-// import page from "./openLayers/index.vue";
-import page from "./cesium/index.vue";
 </script>
 
 <template>
