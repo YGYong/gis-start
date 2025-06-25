@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GLSL基础示例 - 红色画布</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+        overflow: hidden;
+      }
+      header {
+        text-align: center;
+        padding: 2rem 1rem;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      }
+      h1 {
+        font-size: 2.8rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+      }
+      .subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
+      }
+      .container {
+        display: flex;
+        flex: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        gap: 2rem;
+      }
+      .canvas-container {
+        flex: 2;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .canvas-header {
+        padding: 1rem 1.5rem;
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      canvas {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .code-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .code-header {
+        padding: 1rem 1.5rem;
+        background-color: rgba(0, 0, 0, 0.4);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 1.2rem;
+      }
+      pre {
+        flex: 1;
+        margin: 0;
+        padding: 1.5rem;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+        font-family: "Fira Code", "Consolas", monospace;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #f8f8f2;
+      }
+      .explanation {
+        background-color: rgba(0, 0, 0, 0.4);
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .explanation h3 {
+        margin-bottom: 1rem;
+        color: #ff6b6b;
+      }
+      .explanation ul {
+        padding-left: 1.5rem;
+        line-height: 1.7;
+      }
+      .explanation li {
+        margin-bottom: 0.8rem;
+      }
+      .gl-keyword {
+        color: #ff79c6;
+      }
+      .gl-function {
+        color: #50fa7b;
+      }
+      .gl-comment {
+        color: #6272a4;
+      }
+      .gl-value {
+        color: #f1fa8c;
+      }
+      .gl-type {
+        color: #8be9fd;
+      }
+      .gl-operator {
+        color: #ffb86c;
+      }
+      footer {
+        text-align: center;
+        padding: 1.5rem;
+        background-color: rgba(0, 0, 0, 0.4);
+        border-top: 2px solid rgba(255, 255, 255, 0.1);
+        margin-top: auto;
+      }
+      @media (max-width: 900px) {
+        .container {
+          flex-direction: column;
+        }
+        .canvas-container,
+        .code-container {
+          min-height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>WebGL基础示例</h1>
+      <p class="subtitle">
+        这是一个简单的WebGL示例，展示如何使用GLSL片段着色器创建纯红色画布。左侧是渲染结果，右侧是着色器代码。
+      </p>
+    </header>
+
+    <div class="container">
+      <div class="canvas-container">
+        <div class="canvas-header">
+          <span>渲染结果</span>
+          <span id="resolution-info">分辨率: 800×600</span>
+        </div>
+        <canvas id="glCanvas"></canvas>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">片段着色器代码</div>
+        <pre><code>#ifdef GL_ES
+precision mediump float;  <span class="gl-comment">// 设置中等精度的浮点数</span>
+#endif
+
+uniform vec2 resolution; <span class="gl-comment">// 获取画布的分辨率</span>
+
+void main() {
+    <span class="gl-comment">// 创建一个RGBA格式的红色 (R=1.0, G=0.0, B=0.0, A=1.0)</span>
+    <span class="gl-type">vec4</span> color = <span class="gl-type">vec4</span>(<span class="gl-value">1.0</span>, <span class="gl-value">0.0</span>, <span class="gl-value">0.0</span>, <span class="gl-value">1.0</span>);
+    
+    <span class="gl-comment">// 将最终颜色输出到屏幕</span>
+    gl_FragColor = color;
+}</code></pre>
+
+        <div class="explanation">
+          <h3>代码说明</h3>
+          <ul>
+            <li>
+              <strong>precision mediump float</strong
+              >：设置浮点数精度，这对移动设备性能很重要
+            </li>
+            <li>
+              <strong>uniform vec2 resolution</strong>：获取画布的宽高（像素）
+            </li>
+            <li>
+              <strong>vec4 color</strong>：定义RGBA颜色向量，这里设置为红色
+            </li>
+            <li>
+              <strong>gl_FragColor</strong
+              >：GLSL内置变量，用于输出每个像素的最终颜色
+            </li>
+            <li>
+              这个着色器为每个像素输出相同的红色值，因此整个画布显示为纯红色
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>WebGL基础示例 | 使用GLSL片段着色器 | 修改颜色值可改变画布颜色</p>
+    </footer>
+
+    <script>
+      // 获取Canvas元素和WebGL上下文
+      const canvas = document.getElementById("glCanvas");
+      const gl =
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+      // 更新分辨率显示
+      function updateResolutionDisplay() {
+        document.getElementById(
+          "resolution-info"
+        ).textContent = `分辨率: ${canvas.width}×${canvas.height}`;
+      }
+
+      // 调整Canvas大小以适应容器
+      function resizeCanvas() {
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        updateResolutionDisplay();
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        render();
+      }
+
+      // 顶点着色器源码 - 简单绘制一个覆盖全屏幕的矩形
+      const vertexShaderSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+      // 片段着色器源码
+      const fragmentShaderSource = `
+            #ifdef GL_ES
+            precision mediump float;
+            #endif
+            uniform vec2 resolution;
+            void main() {
+                vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+                gl_FragColor = color;
+            }
+        `;
+
+      // 创建着色器
+      function createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error("着色器编译错误:", gl.getShaderInfoLog(shader));
+          gl.deleteShader(shader);
+          return null;
+        }
+        return shader;
+      }
+
+      // 创建着色器程序
+      function createProgram(gl, vertexShader, fragmentShader) {
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+          console.error("程序链接错误:", gl.getProgramInfoLog(program));
+          return null;
+        }
+        return program;
+      }
+
+      // 初始化WebGL
+      function initWebGL() {
+        if (!gl) {
+          alert("无法初始化WebGL，你的浏览器可能不支持。");
+          return;
+        }
+
+        // 创建着色器
+        const vertexShader = createShader(
+          gl,
+          gl.VERTEX_SHADER,
+          vertexShaderSource
+        );
+        const fragmentShader = createShader(
+          gl,
+          gl.FRAGMENT_SHADER,
+          fragmentShaderSource
+        );
+
+        // 创建着色器程序
+        const program = createProgram(gl, vertexShader, fragmentShader);
+        gl.useProgram(program);
+
+        // 设置顶点数据（两个三角形组成一个矩形）
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+        // 覆盖整个画布的矩形（归一化设备坐标，从-1到1）
+        const positions = [
+          -1,
+          -1, // 左下
+          1,
+          -1, // 右下
+          -1,
+          1, // 左上
+          -1,
+          1, // 左上
+          1,
+          -1, // 右下
+          1,
+          1, // 右上
+        ];
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(positions),
+          gl.STATIC_DRAW
+        );
+
+        // 设置顶点属性指针
+        const positionAttributeLocation = gl.getAttribLocation(
+          program,
+          "a_position"
+        );
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(
+          positionAttributeLocation,
+          2,
+          gl.FLOAT,
+          false,
+          0,
+          0
+        );
+
+        // 设置uniform分辨率
+        const resolutionUniformLocation = gl.getUniformLocation(
+          program,
+          "resolution"
+        );
+        gl.uniform2f(resolutionUniformLocation, canvas.width, canvas.height);
+
+        // 初始渲染
+        resizeCanvas();
+      }
+
+      // 渲染函数
+      function render() {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0); // 设置清除颜色为黑色
+        gl.clear(gl.COLOR_BUFFER_BIT); // 清除画布
+
+        // 绘制两个三角形（6个顶点）
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      // 初始化
+      window.addEventListener("load", initWebGL);
+      window.addEventListener("resize", resizeCanvas);
+    </script>
+  </body>
+</html>
