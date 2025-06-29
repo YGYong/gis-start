@@ -35,70 +35,14 @@ onMounted(async () => {
 
   // -------------------------------"
 
-  // 设置样式
-  // const tileset = await Cesium.createOsmBuildingsAsync({
-  //   // 通过样式来设置建筑物的颜色
-  //   style: new Cesium.Cesium3DTileStyle({
-  //     color: {
-  //       conditions: [
-  //         ["${feature['building']} === 'hospital'", "color('#0000FF')"],
-  //         ["${feature['building']} === 'school'", "color('#00FF00')"],
-  //         ["${height} < 50", "color('#FF0000')"],
-  //         [true, "color('#ffffff')"],
-  //       ],
-  //     },
-  //   }),
-  // });
-  // 基本加载
-  // const tileset = await Cesium.createOsmBuildingsAsync();
-  // viewer.scene.primitives.add(tileset);
-  // console.log(tileset,"")
-  // viewer.camera.setView({
-  //   destination: Cesium.Cartesian3.fromDegrees(116.3911, 39.9067, 500),
-  //   orientation: {
-  //     heading: Cesium.Math.toRadians(0),
-  //     pitch: Cesium.Math.toRadians(-90),
-  //     roll: Cesium.Math.toRadians(0),
-  //   },
-  // });
-  // 调试面板
-  // viewer.extend(Cesium.viewerCesium3DTilesInspectorMixin);
-
-  // 创建3D Tileset
-  const tileset = await Cesium.Cesium3DTileset.fromUrl(
-    new URL("./models/Tileset/tileset.json", import.meta.url).href,
-    {
-      maximumScreenSpaceError: 16, // 最大屏幕空间误差
-      maximumMemoryUsage: 512, // 最大内存使用量
-      skipLevelOfDetail: true, // 跳过细节层级
-      dynamicScreenSpaceError: true, // 动态屏幕空间误差
-      dynamicScreenSpaceErrorDensity: 0.001, // 动态屏幕空间误差密度
-    }
-  );
+  const tileset = await Cesium.createOsmBuildingsAsync();
   viewer.scene.primitives.add(tileset);
-  viewer.zoomTo(tileset); // 缩放到3D Tileset
-
-  viewer.screenSpaceEventHandler.setInputAction((click) => {
-    const picked = viewer.scene.pick(click.position);
-    if (picked instanceof Cesium.Cesium3DTileFeature) {
-      // 当前点击为黄色
-      picked.color = Cesium.Color.YELLOW;
-      const properties = picked.getPropertyIds();
-      // 获取属性并打印
-      properties.forEach((name) => {
-        console.log(`${name}: ${picked.getProperty(name)}`);
-      });
-    }
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-  tileset.style = new Cesium.Cesium3DTileStyle({
-    color: {
-      conditions: [
-        ["${Height} >= 80", "color('purple')"],
-        ["${Height} >= 50", "color('red')"],
-        ["${Height} >= 10", "color('green')"],
-        ["true", "color('blue')"],
-      ],
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(116.3911, 39.9067, 500),
+    orientation: {
+      heading: Cesium.Math.toRadians(0),
+      pitch: Cesium.Math.toRadians(-90),
+      roll: Cesium.Math.toRadians(0),
     },
   });
 
@@ -133,10 +77,10 @@ onMounted(async () => {
     credit: new Cesium.Credit("天地图影像"),
   });
   // 添加到viewer实例的影像图层集合中
-  // viewer.imageryLayers.addImageryProvider(labelProvider);
+  viewer.imageryLayers.addImageryProvider(labelProvider);
   // 将天地图影像添加到viewer实例的影像图层集合中
-  // const layer = viewer.imageryLayers.addImageryProvider(tiandituProvider);
-  // layer.alpha = 0.6; // 设置透明度
+  const layer = viewer.imageryLayers.addImageryProvider(tiandituProvider);
+  layer.alpha = 0.6; // 设置透明度
   // 清空logo
   viewer.cesiumWidget.creditContainer.style.display = "none";
 });

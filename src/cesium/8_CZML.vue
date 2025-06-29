@@ -33,74 +33,64 @@ onMounted(async () => {
     // }),
   });
 
-  // -------------------------------"
+  // -------------------------------
 
-  // 设置样式
-  // const tileset = await Cesium.createOsmBuildingsAsync({
-  //   // 通过样式来设置建筑物的颜色
-  //   style: new Cesium.Cesium3DTileStyle({
-  //     color: {
-  //       conditions: [
-  //         ["${feature['building']} === 'hospital'", "color('#0000FF')"],
-  //         ["${feature['building']} === 'school'", "color('#00FF00')"],
-  //         ["${height} < 50", "color('#FF0000')"],
-  //         [true, "color('#ffffff')"],
-  //       ],
-  //     },
-  //   }),
-  // });
-  // 基本加载
-  // const tileset = await Cesium.createOsmBuildingsAsync();
-  // viewer.scene.primitives.add(tileset);
-  // console.log(tileset,"")
-  // viewer.camera.setView({
-  //   destination: Cesium.Cartesian3.fromDegrees(116.3911, 39.9067, 500),
-  //   orientation: {
-  //     heading: Cesium.Math.toRadians(0),
-  //     pitch: Cesium.Math.toRadians(-90),
-  //     roll: Cesium.Math.toRadians(0),
-  //   },
-  // });
-  // 调试面板
-  // viewer.extend(Cesium.viewerCesium3DTilesInspectorMixin);
-
-  // 创建3D Tileset
-  const tileset = await Cesium.Cesium3DTileset.fromUrl(
-    new URL("./models/Tileset/tileset.json", import.meta.url).href,
+  const czml = [
     {
-      maximumScreenSpaceError: 16, // 最大屏幕空间误差
-      maximumMemoryUsage: 512, // 最大内存使用量
-      skipLevelOfDetail: true, // 跳过细节层级
-      dynamicScreenSpaceError: true, // 动态屏幕空间误差
-      dynamicScreenSpaceErrorDensity: 0.001, // 动态屏幕空间误差密度
-    }
-  );
-  viewer.scene.primitives.add(tileset);
-  viewer.zoomTo(tileset); // 缩放到3D Tileset
-
-  viewer.screenSpaceEventHandler.setInputAction((click) => {
-    const picked = viewer.scene.pick(click.position);
-    if (picked instanceof Cesium.Cesium3DTileFeature) {
-      // 当前点击为黄色
-      picked.color = Cesium.Color.YELLOW;
-      const properties = picked.getPropertyIds();
-      // 获取属性并打印
-      properties.forEach((name) => {
-        console.log(`${name}: ${picked.getProperty(name)}`);
-      });
-    }
-  }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-  tileset.style = new Cesium.Cesium3DTileStyle({
-    color: {
-      conditions: [
-        ["${Height} >= 80", "color('purple')"],
-        ["${Height} >= 50", "color('red')"],
-        ["${Height} >= 10", "color('green')"],
-        ["true", "color('blue')"],
-      ],
+      id: "document",
+      name: "CZML Model",
+      version: "1.0",
+      clock: {
+        interval: "2019-06-01T16:00:00Z/2019-06-01T16:10:00Z",
+        currentTime: "2019-06-01T16:00:00Z",
+        multiplier: 60,
+        range: "LOOP_STOP",
+        step: "SYSTEM_CLOCK_MULTIPLIER",
+      },
     },
-  });
+    {
+      id: "test model",
+      name: "Cesium Air",
+      position: {
+        cartographicDegrees: [-77, 37, 10000],
+      },
+      model: {
+        gltf: "https://cesium.com/public/SandcastleSampleData/launchvehicle.glb",
+        scale: 2.0,
+        minimumPixelSize: 128,
+        runAnimations: false,
+        articulations: {
+          "Fairing Open": {
+            epoch: "2019-06-01T16:00:00Z",
+            number: [0, 0, 600, 120],
+          },
+          "Fairing Separate": {
+            epoch: "2019-06-01T16:00:00Z",
+            number: [0, 0, 400, -50],
+          },
+          "Fairing Drop": {
+            epoch: "2019-06-01T16:00:00Z",
+            interpolationAlgorithm: "LAGRANGE",
+            interpolationDegree: 2,
+            number: [0, 0, 80, 0, 100, 0, 120, -1, 600, -120],
+          },
+        },
+      },
+    },
+  ];
+
+  // 加载CZML数据
+  viewer.clock.shouldAnimate = true; // 开启动画
+
+  const dataSource = Cesium.CzmlDataSource.load(czml);
+  viewer.dataSources
+    .add(dataSource)
+    .then(function (dataSource) {
+      viewer.trackedEntity = dataSource.entities.getById("test model");
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
 
   // -------------------------------
 

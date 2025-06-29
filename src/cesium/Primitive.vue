@@ -32,31 +32,86 @@ onMounted(async () => {
     // }),
   });
 
+  // -------------------------------PerInstanceColorAppearance
   // 1.
-  const geometry = new Cesium.CircleGeometry({
-    center: Cesium.Cartesian3.fromDegrees(116.39, 39.9),
-    radius: 1000,
-  });
+  // const geometry = new Cesium.CircleGeometry({
+  //   center: Cesium.Cartesian3.fromDegrees(116.39, 39.9),
+  //   radius: 1000,
+  // });
 
   // 2.
+  // const geometryInstance = new Cesium.GeometryInstance({
+  //   geometry,
+  //   attributes: {
+  //     color: new Cesium.ColorGeometryInstanceAttribute(0.0, 1.0, 1.0, 1),
+  //   },
+  // });
+
+  // 3 PerInstanceColorAppearance
+  // const appearance = new Cesium.PerInstanceColorAppearance({
+  //   flat: true, // 不考虑光照
+  //   translucent: true,
+  // });
+
+  // ---------------------------------
+
+  // --------------------------------- EllipsoidSurfaceAppearance
+  // 1. 定义椭球体几何体
+  // const geometry = new Cesium.PolygonGeometry({
+  //   polygonHierarchy: new Cesium.PolygonHierarchy(
+  //     Cesium.Cartesian3.fromDegreesArray([
+  //       116.39,
+  //       39.9, // 第一个点
+  //       116.4,
+  //       39.9, // 第二个点
+  //       116.4,
+  //       39.91, // 第三个点
+  //       116.39,
+  //       39.91, // 第四个点
+  //     ])
+  //   ),
+  //   height: 0, // 高度为0，表示在地面上
+  //   vertexFormat: Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT, // 包含位置和法线信息
+  // });
+  // // 2. 创建几何实例
+  // const geometryInstance = new Cesium.GeometryInstance({
+  //   geometry,
+  // });
+  // // 3. 创建外观
+  // const appearance = new Cesium.EllipsoidSurfaceAppearance({
+  //   material: Cesium.Material.fromType("Stripe"),
+  // });
+
+  // ---------------------------------PolylineMaterialAppearance
+  // 1. 定义线段几何体
   const geometryInstance = new Cesium.GeometryInstance({
-    geometry,
-    attributes: {
-      color: new Cesium.ColorGeometryInstanceAttribute(0.0, 1.0, 0.0, 1),
-    },
+    geometry: new Cesium.PolylineGeometry({
+      positions: Cesium.Cartesian3.fromDegreesArray([
+        116.39,
+        39.9, // 第一个点
+        116.4,
+        39.9, // 第二个点
+        116.4,
+        39.91, // 第三个点
+        116.39,
+        39.91, // 第四个点
+      ]),
+      width: 10.0,
+      vertexFormat: Cesium.PolylineMaterialAppearance.VERTEX_FORMAT,
+    }),
   });
 
-  // 3.
-  const appearance = new Cesium.MaterialAppearance({
-    flat: true,
-    translucent: true,
+  // 2. 创建外观
+  const appearance = new Cesium.PolylineMaterialAppearance({
+    material: Cesium.Material.fromType("Color"),
   });
 
-  // 4.
+  // 3. 创建几何体实例
   const primitive = new Cesium.Primitive({
     geometryInstances: [geometryInstance],
     appearance,
   });
+
   viewer.scene.primitives.add(primitive);
   // primitive.destroy()
   viewer.camera.setView({

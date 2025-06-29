@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CZML 卫星轨迹示例</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        body, html, #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(25, 25, 35, 0.85);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            z-index: 100;
+            width: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        .time-controls {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .time-display {
+            margin: 0 10px;
+            min-width: 160px;
+            text-align: center;
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        .satellite-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .satellite-item {
+            padding: 8px;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+        }
+        .satellite-item:hover {
+            background: rgba(100, 181, 246, 0.2);
+        }
+        .satellite-item.active {
+            background: rgba(100, 181, 246, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <div class="control-panel">
+        <h2>卫星轨迹控制</h2>
+        <div class="time-controls">
+            <button id="play-pause">▶️</button>
+            <div class="time-display" id="current-time">2023-01-01 00:00:00</div>
+            <button id="reset">↩️</button>
+        </div>
+        <div class="slider-container">
+            <input type="range" id="time-slider" min="0" max="100" value="0" style="width:100%">
+        </div>
+        <div>
+            <label>时间倍速:</label>
+            <select id="time-multiplier">
+                <option value="1">1x</option>
+                <option value="10" selected>10x</option>
+                <option value="60">60x</option>
+                <option value="600">600x</option>
+            </select>
+        </div>
+        <div class="satellite-list" id="satellite-list"></div>
+    </div>
+
+    <script>
+        // 初始化 Cesium Viewer
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            baseLayerPicker: false,
+            timeline: true,
+            animation: true,
+            geocoder: false,
+            homeButton: true,
+            sceneModePicker: true,
+            navigationHelpButton: false,
+            fullscreenButton: true,
+            infoBox: false,
+            skyAtmosphere: false,
+            skyBox: false
+        });
+        
+        // 创建星空背景
+        viewer.scene.skyBox = new Cesium.SkyBox({
+            sources: {
+                positiveX: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
+                negativeX: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
+                positiveY: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
+                negativeY: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
+                positiveZ: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
+                negativeZ: 'https://cesium.com/downloads/stars/stars_16x8.jpg'
+            }
+        });
+        
+        // CZML 数据
+        const czml = [
+            {
+                "id": "document",
+                "name": "卫星轨迹演示",
+                "version": "1.0",
+                "clock": {
+                    "interval": "2023-01-01T00:00:00Z/2023-01-01T01:00:00Z",
+                    "currentTime": "2023-01-01T00:00:00Z",
+                    "multiplier": 10,
+                    "range": "LOOP_STOP",
+                    "step": "SYSTEM_CLOCK_MULTIPLIER"
+                }
+            },
+            {
+                "id": "satellite1",
+                "name": "气象卫星",
+                "description": "气象观测卫星",
+                "position": {
+                    "cartographicDegrees": [
+                        0, 116.39, 39.9, 1000000,
+                        1800, 121.47, 31.23, 1000000,
+                        3600, 116.39, 39.9, 1000000
+                    ],
+                    "interpolationAlgorithm": "LAGRANGE",
+                    "interpolationDegree": 2
+                },
+                "model": {
+                    "gltf": "https://cesium.com/public/SampleData/models/CesiumDrone/CesiumDrone.glb",
+                    "scale": 50,
+                    "minimumPixelSize": 128
+                },
+                "path": {
+                    "width": 2,
+                    "material": {
+                        "polylineGlow": {
+                            "color": {"rgba": [0, 200, 255, 200]},
+                            "glowPower": 0.2
+                        }
+                    },
+                    "resolution": 60
+                },
+                "label": {
+                    "text": "气象卫星",
+                    "font": "14px sans-serif",
+                    "fillColor": {"rgba": [255, 255, 255, 255]},
+                    "outlineColor": {"rgba": [0, 0, 0, 255]},
+                    "outlineWidth": 2,
+                    "pixelOffset": {"cartesian2": [0, 40]},
+                    "style": "FILL_AND_OUTLINE"
+                }
+            },
+            {
+                "id": "satellite2",
+                "name": "通信卫星",
+                "description": "通信中继卫星",
+                "position": {
+                    "cartographicDegrees": [
+                        0, 110.0, 35.0, 1500000,
+                        1800, 115.0, 25.0, 1500000,
+                        3600, 110.0, 35.0, 1500000
+                    ],
+                    "interpolationAlgorithm": "LAGRANGE",
+                    "interpolationDegree": 2
+                },
+                "model": {
+                    "gltf": "https://cesium.com/public/SampleData/models/CesiumSatellite/CesiumSatellite.glb",
+                    "scale": 30,
+                    "minimumPixelSize": 128
+                },
+                "path": {
+                    "width": 2,
+                    "material": {
+                        "polylineGlow": {
+                            "color": {"rgba": [255, 100, 0, 200]},
+                            "glowPower": 0.2
+                        }
+                    },
+                    "resolution": 60
+                },
+                "label": {
+                    "text": "通信卫星",
+                    "font": "14px sans-serif",
+                    "fillColor": {"rgba": [255, 255, 255, 255]},
+                    "outlineColor": {"rgba": [0, 0, 0, 255]},
+                    "outlineWidth": 2,
+                    "pixelOffset": {"cartesian2": [0, 40]},
+                    "style": "FILL_AND_OUTLINE"
+                }
+            }
+        ];
+        
+        // 加载 CZML 数据
+        const dataSourcePromise = Cesium.CzmlDataSource.load(czml);
+        let dataSource;
+        
+        dataSourcePromise.then(ds => {
+            dataSource = ds;
+            viewer.dataSources.add(dataSource);
+            
+            // 初始化卫星列表
+            initSatelliteList();
+            
+            // 定位到场景
+            viewer.zoomTo(dataSource);
+        }).catch(error => {
+            console.error('加载 CZML 失败:', error);
+        });
+        
+        // 初始化卫星列表
+        function initSatelliteList() {
+            const listContainer = document.getElementById('satellite-list');
+            listContainer.innerHTML = '';
+            
+            dataSource.entities.values.forEach(entity => {
+                if (entity.id !== 'document') {
+                    const item = document.createElement('div');
+                    item.className = 'satellite-item';
+                    item.textContent = entity.name;
+                    item.dataset.id = entity.id;
+                    
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.satellite-item').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        item.classList.add('active');
+                        viewer.trackedEntity = entity;
+                    });
+                    
+                    listContainer.appendChild(item);
+                }
+            });
+        }
+        
+        // 时间控制
+        const clock = viewer.clock;
+        
+        document.getElementById('play-pause').addEventListener('click', () => {
+            clock.shouldAnimate = !clock.shouldAnimate;
+            document.getElementById('play-pause').textContent = 
+                clock.shouldAnimate ? '⏸️' : '▶️';
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            clock.currentTime = clock.startTime;
+        });
+        
+        document.getElementById('time-multiplier').addEventListener('change', (e) => {
+            clock.multiplier = parseFloat(e.target.value);
+        });
+        
+        // 时间滑块
+        const timeSlider = document.getElementById('time-slider');
+        const totalSeconds = Cesium.JulianDate.secondsDifference(clock.stopTime, clock.startTime);
+        
+        timeSlider.addEventListener('input', (e) => {
+            const percent = e.target.value / 100;
+            const seconds = percent * totalSeconds;
+            const newTime = Cesium.JulianDate.addSeconds(clock.startTime, seconds, new Cesium.JulianDate());
+            clock.currentTime = newTime;
+        });
+        
+        // 更新时间显示
+        viewer.clock.onTick.addEventListener(updateTimeDisplay);
+        
+        function updateTimeDisplay() {
+            const currentTime = Cesium.JulianDate.toDate(clock.currentTime);
+            document.getElementById('current-time').textContent = 
+                currentTime.toISOString().replace('T', ' ').substring(0, 19);
+            
+            const elapsedSeconds = Cesium.JulianDate.secondsDifference(clock.currentTime, clock.startTime);
+            const percent = (elapsedSeconds / totalSeconds) * 100;
+            timeSlider.value = percent;
+        }
+        
+        // 添加版权信息
+        viewer.cesiumWidget.creditContainer.style.display = "none";
+        
+        // 添加水印
+        const watermark = document.createElement('div');
+        watermark.style.position = 'absolute';
+        watermark.style.bottom = '10px';
+        watermark.style.right = '10px';
+        watermark.style.color = 'rgba(255, 255, 255, 0.7)';
+        watermark.style.fontSize = '12px';
+        watermark.style.zIndex = '100';
+        watermark.textContent = '© 2023 卫星轨迹可视化 | Cesium 1.107';
+        viewer.container.appendChild(watermark);
+    </script>
+</body>
+</html>
