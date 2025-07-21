@@ -1,303 +1,460 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CZML 卫星轨迹示例</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <style>
-        body, html, #cesiumContainer {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Microsoft YaHei', sans-serif;
-        }
-        .control-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(25, 25, 35, 0.85);
-            padding: 15px;
-            border-radius: 15px;
-            color: white;
-            z-index: 100;
-            width: 300px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        }
-        .time-controls {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-        }
-        .time-display {
-            margin: 0 10px;
-            min-width: 160px;
-            text-align: center;
-        }
-        .slider-container {
-            margin: 10px 0;
-        }
-        .satellite-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-        .satellite-item {
-            padding: 8px;
-            border-bottom: 1px solid #444;
-            cursor: pointer;
-        }
-        .satellite-item:hover {
-            background: rgba(100, 181, 246, 0.2);
-        }
-        .satellite-item.active {
-            background: rgba(100, 181, 246, 0.4);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue3 + Leaflet 量测工具</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet Measure CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.css" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet Measure JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 1000px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+    }
+
+    .app-header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+    }
+
+    .app-header h1 {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+    }
+
+    .app-header p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .controls-panel {
+      width: 280px;
+      background: #f8f9fa;
+      border-left: 1px solid #dee2e6;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-section {
+      margin-bottom: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      border-left: 3px solid #3498db;
+    }
+
+    .panel-section h2 {
+      color: #2c3e50;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-section h2 i {
+      font-size: 1rem;
+      color: #3498db;
+    }
+
+    .measure-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .measure-btn {
+      padding: 10px 15px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.3s;
+    }
+
+    .measure-btn i {
+      font-size: 1.1rem;
+    }
+
+    .measure-btn:hover {
+      background: #2980b9;
+    }
+
+    .measure-btn.active {
+      background: #2980b9;
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+    }
+
+    .results-box {
+      background: #f1f8ff;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    .result-item {
+      padding: 5px 0;
+      border-bottom: 1px solid #e1f0ff;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .instructions {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #6c757d;
+    }
+
+    .instructions ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    .coordinate-box {
+      background: #f1f8ff;
+      padding: 12px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    .coordinates {
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+
+      .controls-panel {
+        width: 100%;
+        height: 35%;
+      }
+
+      .map-container {
+        height: 65%;
+      }
+    }
+
+    .measure-legend {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      font-size: 13px;
+      max-width: 200px;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #2c3e50;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 3px 0;
+    }
+
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      margin-right: 6px;
+      border-radius: 3px;
+    }
+  </style>
 </head>
+
 <body>
-    <div id="cesiumContainer"></div>
-    <div class="control-panel">
-        <h2>卫星轨迹控制</h2>
-        <div class="time-controls">
-            <button id="play-pause">▶️</button>
-            <div class="time-display" id="current-time">2023-01-01 00:00:00</div>
-            <button id="reset">↩️</button>
-        </div>
-        <div class="slider-container">
-            <input type="range" id="time-slider" min="0" max="100" value="0" style="width:100%">
-        </div>
-        <div>
-            <label>时间倍速:</label>
-            <select id="time-multiplier">
-                <option value="1">1x</option>
-                <option value="10" selected>10x</option>
-                <option value="60">60x</option>
-                <option value="600">600x</option>
-            </select>
-        </div>
-        <div class="satellite-list" id="satellite-list"></div>
+  <div id="app">
+    <div class="app-header">
+      <h1>Vue3 + Leaflet 地图量测工具</h1>
+      <p>使用Leaflet和Leaflet-Measure插件实现距离和面积测量</p>
     </div>
 
-    <script>
-        // 初始化 Cesium Viewer
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-            baseLayerPicker: false,
-            timeline: true,
-            animation: true,
-            geocoder: false,
-            homeButton: true,
-            sceneModePicker: true,
-            navigationHelpButton: false,
-            fullscreenButton: true,
-            infoBox: false,
-            skyAtmosphere: false,
-            skyBox: false
-        });
-        
-        // 创建星空背景
-        viewer.scene.skyBox = new Cesium.SkyBox({
-            sources: {
-                positiveX: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
-                negativeX: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
-                positiveY: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
-                negativeY: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
-                positiveZ: 'https://cesium.com/downloads/stars/stars_16x8.jpg',
-                negativeZ: 'https://cesium.com/downloads/stars/stars_16x8.jpg'
+    <div class="app-container">
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="measure-legend">
+          <div class="legend-title">量测图例</div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #3498db;"></div>
+            <span>距离测量线</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: rgba(52, 152, 219, 0.2);"></div>
+            <span>面积测量区域</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background-color: #e74c3c;"></div>
+            <span>测量端点</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-panel">
+        <div class="panel-section">
+          <h2><i class="fas fa-ruler"></i> 量测工具</h2>
+          <div class="measure-buttons">
+            <button class="measure-btn" @click="startDistanceMeasurement">
+              <i class="fas fa-ruler-horizontal"></i>
+              <span>测量距离</span>
+            </button>
+            <button class="measure-btn" @click="startAreaMeasurement">
+              <i class="fas fa-draw-polygon"></i>
+              <span>测量面积</span>
+            </button>
+            <button class="measure-btn" @click="clearMeasurements">
+              <i class="fas fa-trash-alt"></i>
+              <span>清除测量</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2><i class="fas fa-calculator"></i> 测量结果</h2>
+          <div class="results-box">
+            <div v-if="measurementResults.length === 0" class="result-item">
+              暂无测量数据
+            </div>
+            <div v-for="(result, index) in measurementResults" :key="index" class="result-item">
+              <div><strong>{{ result.type === 'distance' ? '距离' : '面积' }}测量 #{{ index + 1 }}</strong></div>
+              <div v-if="result.type === 'distance'">
+                总距离: {{ result.distance }} 米
+              </div>
+              <div v-if="result.type === 'area'">
+                总面积: {{ result.area }} 平方米<br>
+                周长: {{ result.perimeter }} 米
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+          <div class="instructions">
+            <p>使用量测工具在地图上进行测量：</p>
+            <ul>
+              <li><strong>距离测量</strong>: 点击地图设置起点，继续点击添加中间点，双击结束测量</li>
+              <li><strong>面积测量</strong>: 点击地图设置多边形顶点，双击闭合多边形并完成测量</li>
+              <li><strong>清除测量</strong>: 点击"清除测量"按钮移除所有测量结果</li>
+              <li><strong>单位转换</strong>: 结果自动显示为米/平方米，可在代码中配置其他单位</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2><i class="fas fa-map-marker-alt"></i> 当前坐标</h2>
+          <div class="coordinate-box">
+            <div class="coordinates">经度: {{ currentLng }}</div>
+            <div class="coordinates">纬度: {{ currentLat }}</div>
+            <div class="coordinates">缩放级别: {{ currentZoom }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+
+    // Font Awesome 图标（使用CDN）
+    const fontAwesomeScript = document.createElement('script');
+    fontAwesomeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js';
+    document.head.appendChild(fontAwesomeScript);
+
+    createApp({
+      setup() {
+        // 地图实例
+        let map = null;
+        let measureControl = null;
+
+        // 当前坐标信息
+        const currentLat = ref(0);
+        const currentLng = ref(0);
+        const currentZoom = ref(0);
+
+        // 测量结果
+        const measurementResults = ref([]);
+
+        // 初始化地图
+        const initMap = () => {
+          // 创建地图实例
+          map = L.map('map', {
+            center: [39.9042, 116.4074], // 北京
+            zoom: 12
+          });
+
+          // 添加底图图层
+          L.tileLayer('https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}').addTo(map);
+
+          // 初始化量测控件
+          measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares',
+            activeColor: '#3498db',
+            completedColor: '#2c3e50',
+            popupOptions: {
+              className: 'leaflet-measure-resultpopup',
+              autoPanPadding: [10, 10]
             }
-        });
-        
-        // CZML 数据
-        const czml = [
-            {
-                "id": "document",
-                "name": "卫星轨迹演示",
-                "version": "1.0",
-                "clock": {
-                    "interval": "2023-01-01T00:00:00Z/2023-01-01T01:00:00Z",
-                    "currentTime": "2023-01-01T00:00:00Z",
-                    "multiplier": 10,
-                    "range": "LOOP_STOP",
-                    "step": "SYSTEM_CLOCK_MULTIPLIER"
-                }
-            },
-            {
-                "id": "satellite1",
-                "name": "气象卫星",
-                "description": "气象观测卫星",
-                "position": {
-                    "cartographicDegrees": [
-                        0, 116.39, 39.9, 1000000,
-                        1800, 121.47, 31.23, 1000000,
-                        3600, 116.39, 39.9, 1000000
-                    ],
-                    "interpolationAlgorithm": "LAGRANGE",
-                    "interpolationDegree": 2
-                },
-                "model": {
-                    "gltf": "https://cesium.com/public/SampleData/models/CesiumDrone/CesiumDrone.glb",
-                    "scale": 50,
-                    "minimumPixelSize": 128
-                },
-                "path": {
-                    "width": 2,
-                    "material": {
-                        "polylineGlow": {
-                            "color": {"rgba": [0, 200, 255, 200]},
-                            "glowPower": 0.2
-                        }
-                    },
-                    "resolution": 60
-                },
-                "label": {
-                    "text": "气象卫星",
-                    "font": "14px sans-serif",
-                    "fillColor": {"rgba": [255, 255, 255, 255]},
-                    "outlineColor": {"rgba": [0, 0, 0, 255]},
-                    "outlineWidth": 2,
-                    "pixelOffset": {"cartesian2": [0, 40]},
-                    "style": "FILL_AND_OUTLINE"
-                }
-            },
-            {
-                "id": "satellite2",
-                "name": "通信卫星",
-                "description": "通信中继卫星",
-                "position": {
-                    "cartographicDegrees": [
-                        0, 110.0, 35.0, 1500000,
-                        1800, 115.0, 25.0, 1500000,
-                        3600, 110.0, 35.0, 1500000
-                    ],
-                    "interpolationAlgorithm": "LAGRANGE",
-                    "interpolationDegree": 2
-                },
-                "model": {
-                    "gltf": "https://cesium.com/public/SampleData/models/CesiumSatellite/CesiumSatellite.glb",
-                    "scale": 30,
-                    "minimumPixelSize": 128
-                },
-                "path": {
-                    "width": 2,
-                    "material": {
-                        "polylineGlow": {
-                            "color": {"rgba": [255, 100, 0, 200]},
-                            "glowPower": 0.2
-                        }
-                    },
-                    "resolution": 60
-                },
-                "label": {
-                    "text": "通信卫星",
-                    "font": "14px sans-serif",
-                    "fillColor": {"rgba": [255, 255, 255, 255]},
-                    "outlineColor": {"rgba": [0, 0, 0, 255]},
-                    "outlineWidth": 2,
-                    "pixelOffset": {"cartesian2": [0, 40]},
-                    "style": "FILL_AND_OUTLINE"
-                }
-            }
-        ];
-        
-        // 加载 CZML 数据
-        const dataSourcePromise = Cesium.CzmlDataSource.load(czml);
-        let dataSource;
-        
-        dataSourcePromise.then(ds => {
-            dataSource = ds;
-            viewer.dataSources.add(dataSource);
-            
-            // 初始化卫星列表
-            initSatelliteList();
-            
-            // 定位到场景
-            viewer.zoomTo(dataSource);
-        }).catch(error => {
-            console.error('加载 CZML 失败:', error);
-        });
-        
-        // 初始化卫星列表
-        function initSatelliteList() {
-            const listContainer = document.getElementById('satellite-list');
-            listContainer.innerHTML = '';
-            
-            dataSource.entities.values.forEach(entity => {
-                if (entity.id !== 'document') {
-                    const item = document.createElement('div');
-                    item.className = 'satellite-item';
-                    item.textContent = entity.name;
-                    item.dataset.id = entity.id;
-                    
-                    item.addEventListener('click', () => {
-                        document.querySelectorAll('.satellite-item').forEach(el => {
-                            el.classList.remove('active');
-                        });
-                        item.classList.add('active');
-                        viewer.trackedEntity = entity;
-                    });
-                    
-                    listContainer.appendChild(item);
-                }
+          });
+
+          measureControl.addTo(map);
+
+          // 监听测量事件
+          map.on('measurestart', () => {
+            // 清除之前的临时结果
+            measurementResults.value = measurementResults.value.filter(r => !r.temporary);
+          });
+
+          map.on('measurefinish', (e) => {
+            // 添加测量结果
+            measurementResults.value.push({
+              id: Date.now(),
+              type: e.measureType,
+              distance: e.measureType === 'distance' ? e.totalDistance.toFixed(2) + ' 米' : '',
+              area: e.measureType === 'area' ? e.totalArea.toFixed(2) + ' 平方米' : '',
+              perimeter: e.measureType === 'area' ? e.totalPerimeter.toFixed(2) + ' 米' : '',
+              temporary: false
             });
-        }
-        
-        // 时间控制
-        const clock = viewer.clock;
-        
-        document.getElementById('play-pause').addEventListener('click', () => {
-            clock.shouldAnimate = !clock.shouldAnimate;
-            document.getElementById('play-pause').textContent = 
-                clock.shouldAnimate ? '⏸️' : '▶️';
+          });
+
+          // 监听地图移动事件
+          map.on('mousemove', (event) => {
+            currentLat.value = event.latlng.lat.toFixed(6);
+            currentLng.value = event.latlng.lng.toFixed(6);
+          });
+
+          // 监听缩放事件
+          map.on('zoomend', () => {
+            currentZoom.value = map.getZoom();
+          });
+
+          // 初始值
+          const center = map.getCenter();
+          currentLat.value = center.lat.toFixed(6);
+          currentLng.value = center.lng.toFixed(6);
+          currentZoom.value = map.getZoom();
+        };
+
+        // 开始距离测量
+        const startDistanceMeasurement = () => {
+          if (measureControl) {
+            measureControl._measuring = false;
+            measureControl._startMeasure('distance');
+          }
+        };
+
+        // 开始面积测量
+        const startAreaMeasurement = () => {
+          if (measureControl) {
+            measureControl._measuring = false;
+            measureControl._startMeasure('area');
+          }
+        };
+
+        // 清除所有测量
+        const clearMeasurements = () => {
+          if (measureControl) {
+            measureControl._clearMeasurements();
+            measurementResults.value = [];
+          }
+        };
+
+        // 组件挂载后初始化地图
+        onMounted(() => {
+          initMap();
         });
-        
-        document.getElementById('reset').addEventListener('click', () => {
-            clock.currentTime = clock.startTime;
-        });
-        
-        document.getElementById('time-multiplier').addEventListener('change', (e) => {
-            clock.multiplier = parseFloat(e.target.value);
-        });
-        
-        // 时间滑块
-        const timeSlider = document.getElementById('time-slider');
-        const totalSeconds = Cesium.JulianDate.secondsDifference(clock.stopTime, clock.startTime);
-        
-        timeSlider.addEventListener('input', (e) => {
-            const percent = e.target.value / 100;
-            const seconds = percent * totalSeconds;
-            const newTime = Cesium.JulianDate.addSeconds(clock.startTime, seconds, new Cesium.JulianDate());
-            clock.currentTime = newTime;
-        });
-        
-        // 更新时间显示
-        viewer.clock.onTick.addEventListener(updateTimeDisplay);
-        
-        function updateTimeDisplay() {
-            const currentTime = Cesium.JulianDate.toDate(clock.currentTime);
-            document.getElementById('current-time').textContent = 
-                currentTime.toISOString().replace('T', ' ').substring(0, 19);
-            
-            const elapsedSeconds = Cesium.JulianDate.secondsDifference(clock.currentTime, clock.startTime);
-            const percent = (elapsedSeconds / totalSeconds) * 100;
-            timeSlider.value = percent;
-        }
-        
-        // 添加版权信息
-        viewer.cesiumWidget.creditContainer.style.display = "none";
-        
-        // 添加水印
-        const watermark = document.createElement('div');
-        watermark.style.position = 'absolute';
-        watermark.style.bottom = '10px';
-        watermark.style.right = '10px';
-        watermark.style.color = 'rgba(255, 255, 255, 0.7)';
-        watermark.style.fontSize = '12px';
-        watermark.style.zIndex = '100';
-        watermark.textContent = '© 2023 卫星轨迹可视化 | Cesium 1.107';
-        viewer.container.appendChild(watermark);
-    </script>
+
+        return {
+          currentLat,
+          currentLng,
+          currentZoom,
+          measurementResults,
+          startDistanceMeasurement,
+          startAreaMeasurement,
+          clearMeasurements
+        };
+      }
+    }).mount('#app');
+  </script>
 </body>
+
 </html>

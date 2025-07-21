@@ -60,7 +60,7 @@ function initLabelForEntity(entity) {
     show: false,
     text: entity.name || "未命名线路",
     font: `${viewModel.fontSize}px ${viewModel.fontFamily}`,
-    fillColor: Cesium.Color.RED,
+    fillColor: Cesium.Color.WHITE,
     outlineColor: Cesium.Color.BLACK,
     outlineWidth: viewModel.outlineWidth,
     style: Cesium.LabelStyle.FILL_AND_OUTLINE,

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:ns2="http://www.google.com/kml/ext/2.2" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0">
+    <Document>
+        <LookAt>
+            <longitude>-74.01020256421765</longitude>
+            <latitude>40.70974625546435</latitude>
+            <altitude>694.1959814771428</altitude>
+            <heading>0.0</heading>
+            <tilt>0.0</tilt>
+            <range>560.9467647722848</range>
+            <altitudeMode>clampToGround</altitudeMode>
+        </LookAt>
+        <NetworkLink>
+            <name>Manhattan (NY) points of interest</name>
+            <visibility>1</visibility>
+            <open>1</open>
+            <description>Points of interest in New York, New York (on Manhattan). One of the attributes contains the name of a file with a picture of the point of interest.</description>
+            <LookAt>
+                <longitude>-74.00668161555254</longitude>
+                <latitude>40.71371615223534</latitude>
+                <altitude>2173.081355567034</altitude>
+                <heading>0.0</heading>
+                <tilt>0.0</tilt>
+                <range>1755.96371704499</range>
+                <altitudeMode>clampToGround</altitudeMode>
+            </LookAt>
+            <Url>
+                <href>http://localhost:8520/geoserver/tiger/wms?service=wms&amp;request=GetMap&amp;version=1.1.1&amp;format=application/vnd.google-earth.kml+xml&amp;layers=poi&amp;styles=poi&amp;height=2048&amp;width=2048&amp;transparent=false&amp;srs=EPSG:4326&amp;format_options=AUTOFIT:true;KMATTR:true;KMPLACEMARK:false;KMSCORE:40;MODE:refresh;SUPEROVERLAY:false</href>
+                <refreshInterval>0.0</refreshInterval>
+                <viewRefreshMode>onStop</viewRefreshMode>
+                <viewRefreshTime>1.0</viewRefreshTime>
+                <viewBoundScale>1.0</viewBoundScale>
+            </Url>
+        </NetworkLink>
+    </Document>
+</kml>

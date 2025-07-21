@@ -1,0 +1,129 @@
+<template>
+  <div ref="cesiumContainer" style="width: 100%; height: 90vh"></div>
+</template>
+
+<script setup>
+import { ref, onMounted } from "vue";
+import * as Cesium from "cesium";
+import CesiumNavigation from "cesium-navigation-es6";
+const cesiumContainer = ref(null);
+let viewer = null;
+
+onMounted(async () => {
+  // 设置访问令牌
+  // Cesium.Ion.defaultAccessToken =
+  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwZTEwODgwMS1iYTY0LTRhNmYtYWFhMS03MDEzMjlhYWNjOTciLCJpZCI6MzAwMTM5LCJpYXQiOjE3NDY1ODI5MTR9.P4bdCMYyoubNMaQ_-ZkU99mM8Da3o8HIo4A57stHRAg";
+
+  // 初始化Viewer
+  viewer = new Cesium.Viewer(cesiumContainer.value, {
+    geocoder: false, // 关闭地理编码搜索
+    homeButton: false, // 关闭主页按钮
+    sceneModePicker: false, // 关闭场景模式选择器
+    baseLayerPicker: false, // 关闭底图选择器
+    navigationHelpButton: false, // 关闭导航帮助
+    animation: false, // 关闭动画控件
+    timeline: false, // 关闭时间轴
+    fullscreenButton: false, // 关闭全屏按钮
+    // selectionIndicator: false,
+    // infoBox: false,
+    // 开启地形
+    // terrainProvider: await Cesium.createWorldTerrainAsync({
+    //   requestVertexNormals: true, // 真实光照效果
+    //   requestWaterMask: true, // 真实水面流动效果
+    // }),
+  });
+
+  // -------------------------------heightReference 不能设置为 CLAMP_TO_GROUND 贴地显示
+
+  const pointEntity = viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(116.3975, 39.9075, 50),
+    point: {
+      color: Cesium.Color.RED.withAlpha(0.8), // 80% 不透明的红色
+      pixelSize: 20, // 直径20像素
+      outlineColor: Cesium.Color.WHITE, // 白色轮廓
+      outlineWidth: 3, // 轮廓宽度3像素
+      show: true, // 默认显示
+      // heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+    },
+  });
+  // 使用时间动态颜色实现闪烁
+  pointEntity.point.color = new Cesium.CallbackProperty((time) => {
+    const alpha = 0.5 + 0.5 * Math.sin(Date.now() / 500);
+    return Cesium.Color.RED.withAlpha(alpha);
+  }, false);
+
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(116.3975, 39.9075, 500),
+    orientation: {
+      heading: Cesium.Math.toRadians(0),
+      pitch: Cesium.Math.toRadians(-90),
+      roll: Cesium.Math.toRadians(0),
+    },
+  });
+
+  // 创建沿圆周运动的点
+  // const startTime = Cesium.JulianDate.now();
+  // const position = new Cesium.CallbackProperty((time, result) => {
+  //   // 计算经过的时间（秒）
+  //   const elapsed = Cesium.JulianDate.secondsDifference(time, startTime);
+
+  //   // 计算位置（圆周运动）
+  //   const radius = 100000; // 半径100公里
+  //   const angle = (elapsed * Math.PI) / 10; // 每10秒转180度
+
+  //   return Cesium.Cartesian3.fromDegrees(
+  //     116.39 + (radius * Math.cos(angle)) / 111000, // 经度
+  //     39.9 + (radius * Math.sin(angle)) / 111000, // 纬度
+  //     5000, // 高度
+  //   );
+  // }, false); // false 表示动态变化
+
+  // const point = viewer.entities.add({
+  //   position: position,
+  //   point: {
+  //     pixelSize: 20,
+  //     color: Cesium.Color.RED,
+  //   },
+  // });
+  // viewer.clock.shouldAnimate = true; // 确保时钟动画开启
+  // viewer.trackedEntity = point; // 使相机跟随点移动
+
+  // -------------------------------
+
+  // ================================================
+  // 以下为天地图及天地图标注加载
+  const tiandituProvider = new Cesium.WebMapTileServiceImageryProvider({
+    url:
+      "http://{s}.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=" +
+      "05be06461004055923091de7f3e51aa6",
+    layer: "img",
+    style: "default",
+    format: "tiles",
+    tileMatrixSetID: "w", // 天地图使用 Web 墨卡托投影（EPSG:3857），需确保 tileMatrixSetID: "w"
+    subdomains: ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"], // 子域名
+    maximumLevel: 18,
+    credit: new Cesium.Credit("天地图影像"),
+  });
+
+  // 添加地理标注
+  const labelProvider = new Cesium.WebMapTileServiceImageryProvider({
+    url:
+      "http://{s}.tianditu.gov.cn/cia_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cia&tileMatrixSet=w&tileMatrix={TileMatrix}&tileRow={TileRow}&tileCol={TileCol}&style=default&format=tiles&tk=" +
+      "05be06461004055923091de7f3e51aa6",
+    layer: "img",
+    style: "default",
+    format: "tiles",
+    tileMatrixSetID: "w",
+    subdomains: ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"], // 子域名轮询
+    maximumLevel: 18,
+    credit: new Cesium.Credit("天地图影像"),
+  });
+  // 添加到viewer实例的影像图层集合中
+  viewer.imageryLayers.addImageryProvider(labelProvider);
+  // 将天地图影像添加到viewer实例的影像图层集合中
+  const layer = viewer.imageryLayers.addImageryProvider(tiandituProvider);
+  layer.alpha = 0.6; // 设置透明度
+  // 清空logo
+  viewer.cesiumWidget.creditContainer.style.display = "none";
+});
+</script>
