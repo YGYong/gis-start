@@ -1,12 +1,14 @@
 <template>
-  <div id="cesium-container"></div>
+  <div ref="cesiumContainer" class="container"></div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import * as Cesium from "cesium";
 
+const cesiumContainer = ref(null);
 let viewer = null;
+
 const labelCollection = new Cesium.LabelCollection();
 const lineEntities = [];
 const labelPool = [];
@@ -20,8 +22,12 @@ const viewModel = {
   maxDistance: 300000,
 };
 
+// 天地图TOKEN
+const token = "05be06461004055923091de7f3e51aa6";
+
 onMounted(() => {
-  viewer = new Cesium.Viewer("cesium-container", {
+  // 初始化Viewer
+  viewer = new Cesium.Viewer(cesiumContainer.value, {
     geocoder: false, // 关闭地理编码搜索
     homeButton: false, // 关闭主页按钮
     sceneModePicker: false, // 关闭场景模式选择器
@@ -30,7 +36,10 @@ onMounted(() => {
     animation: false, // 关闭动画控件
     timeline: false, // 关闭时间轴
     fullscreenButton: false, // 关闭全屏按钮
+    baseLayer: false, // 关闭默认地图
   });
+  // 清空logo
+  viewer.cesiumWidget.creditContainer.style.display = "none";
 
   viewer.scene.primitives.add(labelCollection);
 
@@ -52,10 +61,11 @@ onMounted(() => {
     }
     startLabelUpdater();
   });
+  initMap();
 });
 
 // 初始化实体标签
-function initLabelForEntity(entity) {
+const initLabelForEntity = (entity) => {
   const label = labelCollection.add({
     show: false,
     text: entity.name || "未命名线路",
@@ -79,15 +89,15 @@ function initLabelForEntity(entity) {
     lastPosition: new Cesium.Cartesian3(),
     lastUpdate: 0,
   });
-}
+};
 
 // 启动标签更新器
-function startLabelUpdater() {
+const startLabelUpdater = () => {
   viewer.scene.postRender.addEventListener(updateVisibleLabels);
-}
+};
 
 // 更新可见标签 - 核心逻辑
-function updateVisibleLabels() {
+const updateVisibleLabels = () => {
   if (!viewModel.labelsVisible) return;
 
   // 获取一个时间戳，用于测量事件之间的时间差
@@ -162,7 +172,7 @@ function updateVisibleLabels() {
       placedPositions.splice(i, 1);
     }
   }
-}
+};
 
 // 获取折线中心点
 function getPolylineCenter(entity) {
@@ -231,7 +241,7 @@ function calculateBestLabelPosition(positions, placedPositions) {
 }
 
 // 检查位置是否有效
-function isPositionValid(position, placedPositions) {
+const isPositionValid = (position, placedPositions) => {
   const camera = viewer.scene.camera;
 
   // 使用正确的视锥体裁剪方法
@@ -286,7 +296,7 @@ function isPositionValid(position, placedPositions) {
   }
 
   return true;
-}
+};
 
 onBeforeUnmount(() => {
   if (viewer) {
@@ -294,14 +304,45 @@ onBeforeUnmount(() => {
     viewer.destroy();
   }
 });
-</script>
 
-<style>
-#cesium-container {
-  width: 100%;
+// 加载天地图
+const initMap = () => {
+  // 以下为天地图及天地图标注加载
+  const tiandituProvider = new Cesium.WebMapTileServiceImageryProvider({
+    url:
+      "http://{s}.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=" +
+      token,
+    layer: "img",
+    style: "default",
+    format: "tiles",
+    tileMatrixSetID: "w", // 天地图使用 Web 墨卡托投影（EPSG:3857），需确保 tileMatrixSetID: "w"
+    subdomains: ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"], // 子域名
+    maximumLevel: 18,
+    credit: new Cesium.Credit("天地图影像"),
+  });
+
+  // 添加地理标注
+  const labelProvider = new Cesium.WebMapTileServiceImageryProvider({
+    url:
+      "http://{s}.tianditu.gov.cn/cia_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cia&tileMatrixSet=w&tileMatrix={TileMatrix}&tileRow={TileRow}&tileCol={TileCol}&style=default&format=tiles&tk=" +
+      token,
+    layer: "img",
+    style: "default",
+    format: "tiles",
+    tileMatrixSetID: "w",
+    subdomains: ["t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7"], // 子域名轮询
+    maximumLevel: 18,
+    credit: new Cesium.Credit("天地图影像"),
+  });
+  // 天地图影像添加到viewer实例的影像图层集合中
+  viewer.imageryLayers.addImageryProvider(tiandituProvider);
+  // 天地图地理标注（后添加的会覆盖前面的）
+  viewer.imageryLayers.addImageryProvider(labelProvider);
+};
+</script>
+<style scoped>
+.container {
+  width: 100vw;
   height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
 }
 </style>

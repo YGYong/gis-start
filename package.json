@@ -9,11 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^7.2.0",
     "cesium": "^1.130.0",
     "cesium-navigation-es6": "^3.0.9",
     "dat.gui": "^0.7.9",
     "dayjs": "^1.11.13",
     "echarts": "^5.6.0",
+    "element-plus": "^2.10.4",
+    "gcoord": "^1.0.7",
+    "geojson-vt": "^4.0.2",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
     "leaflet-image": "^0.4.0",
@@ -24,6 +28,8 @@
     "leaflet.markercluster": "^1.5.3",
     "ol": "^10.5.0",
     "ol-echarts": "^4.0.1",
+    "proj4": "^2.19.7",
+    "terraformer-wkt-parser": "^1.2.1",
     "vite-plugin-cdn-import": "^1.0.1",
     "vue": "^3.5.13"
   },
