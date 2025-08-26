@@ -1,191 +1,42 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>加载格网</title>
-    <meta charset="utf-8" />
-    <!-- cdn加载ol -->
-    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css" />
-    <style>
-        * {
-            padding: 0;
-            margin: 0;
-            font-size: 14px;
-            font-family: '微软雅黑';
-        }
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-        }
-
-        #map {
-            position: absolute;
-            top: 50px;
-            bottom: 0;
-            width: 100%;
-        }
-
-        #top-content {
-            position: absolute;
-            width: 100%;
-            height: 50px;
-            line-height: 50px;
-            background: linear-gradient(135deg, #ff00cc, #ffcc00, #00ffcc, #ff0066);
-            color: #fff;
-            text-align: center;
-        }
-
-        .grid-btn {
-            border-radius: 5px;
-            border: 1px solid #50505040;
-            padding: 5px 20px;
-            color: #fff;
-            margin: 0 10px;
-            background: #377d466e;
-            transition: background-color 10s ease-in-out 10s;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .grid-btn:hover {
-            cursor: pointer;
-            filter: brightness(120%);
-            background: linear-gradient(135deg, #c850c0, #4158d0);
-        }
-
-        .active {
-            background: linear-gradient(135deg, #c850c0, #4158d0);
-        }
-    </style>
+  <title>萤石云多路巡检</title>
+  <script src="./static/ezuikit/ezuikit.js"></script>
 </head>
-
 <body>
-    <div id="map" title="地图显示"></div>
-    <div id="top-content">
-        <button class="grid-btn grid-line">添加格网</button>
-        <button class="grid-btn lnglat-line">添加经纬网</button>
-    </div>
+  <div id="player" style="width: 100%; height: 80vh;"></div>
+
+  <script>
+    // 设备列表配置
+    const deviceList = [
+      { 
+        accessToken: "at.2xxxxxxxxxxxx", 
+        deviceSerial: "G39444019", 
+        channelNo: 1,
+        title: "一楼大厅"
+      },
+      { 
+        accessToken: "at.2xxxxxxxxxxxx", 
+        deviceSerial: "K98465602", 
+        channelNo: 1,
+        title: "停车场入口"
+      }
+    ];
+
+    // 初始化巡检界面
+    const player = new EZUIKit.EZUIKitInspectionUI(
+      document.getElementById('player'),
+      {
+        list: deviceList,
+        layout: "quad",       // 四分屏
+        autoplay: true,
+        decoderPath: "/static/ezuikit/" // 解码库路径
+      }
+    );
+
+    // 10秒后停止播放（示例）
+    setTimeout(() => player.stop(), 10000);
+  </script>
 </body>
-
 </html>
-
-<script>
-    //地图投影坐标系
-    const projection = ol.proj.get('EPSG:3857');
-    //==============================================================================//
-    //============================天地图服务参数简单介绍==============================//
-    //================================vec：矢量图层==================================//
-    //================================img：影像图层==================================//
-    //================================cva：注记图层==================================//
-    //======================其中：_c表示经纬度投影，_w表示球面墨卡托投影================//
-    //==============================================================================//
-    const TDTImgLayer = new ol.layer.Tile({
-        title: "天地图影像图层",
-        source: new ol.source.XYZ({
-            url: "https://webst01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=6&x={x}&y={y}&z={z}",
-            attibutions: "天地图注记描述",
-            crossOrigin: "anoymous",
-            wrapX: false
-        })
-    })
-    const TDTImgCvaLayer = new ol.layer.Tile({
-        title: "天地图影像注记图层",
-        source: new ol.source.XYZ({
-            url: "https://webst01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=6&x={x}&y={y}&z={z}",
-            attibutions: "天地图注记描述",
-            crossOrigin: "anoymous",
-            wrapX: false
-        })
-    })
-    const map = new ol.Map({
-        target: "map",
-        loadTilesWhileInteracting: true,
-        view: new ol.View({
-            center: [104.0635986160487, 30.660919181071225],
-            // center: [11444274, 12707441],
-            zoom: 5,
-            worldsWrap: true,
-            minZoom: 1,
-            maxZoom: 20,
-            projection: "EPSG:4326"
-        }),
-        layers: [TDTImgLayer, TDTImgCvaLayer],
-        // 地图默认控件
-        controls: ol.control.defaults.defaults({
-            zoom: true,
-            attribution: true,
-            rotate: true
-        })
-    })
-    map.on('click', evt => {
-        console.log(evt.coordinate)
-    })
-
-    const TileSource = new ol.source.TileDebug({
-        projection: map.getView().getProjection(),
-        // tileGrid: new ol.tilegrid.TileGrid({
-
-        // }),
-        wrapX: false,
-        // template: '(x,y,z)({x},{y},{z})' // 显示结构
-    })
-    const gridLayer = new ol.layer.Tile({
-        source: TileSource
-    })
-
-    const graticule = new ol.layer.Graticule({
-        maxLines: 200, // 设置最大线条数量
-        strokeStyle: new ol.style.Stroke({
-            lineDash: [5], // 设置虚线间隔
-            width: 1.5, // 设置线段宽度
-            color: 'rgba(255,204,102, 0.85)' // 设置线段颜色
-        }),
-        showLabels: true,
-        wrapX: false,
-    })
-
-    /**
-     * 添加格网
-     */
-    document.querySelector('.grid-line').addEventListener('click', evt => {
-        toogleAciveClass(evt.target)
-        removeLayer()
-        map.addLayer(gridLayer)
-    })
-
-    /**
-     * 添加经纬网
-     */
-    document.querySelector('.lnglat-line').addEventListener('click', evt => {
-        toogleAciveClass(evt.target)
-        removeLayer()
-        map.addLayer(graticule)
-    })
-    /**
-     * 移除图层
-     */
-    function removeLayer() {
-        map.removeLayer(gridLayer)
-        map.removeLayer(graticule)
-    }
-    /**
-     * 切换激活样式
-     */
-    function toogleAciveClass(target) {
-        // 判断top-content子元素是否激活，并切换激活样式
-        const swipeBtnLike = document.querySelector('#top-content')
-        for (let element of swipeBtnLike.children) {
-            if (target === element) {
-                target.classList.add('active')
-            } else {
-                element.classList.remove('active')
-            }
-        }
-    }
-
-</script>
